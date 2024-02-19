@@ -10,8 +10,8 @@
 <%
 ' 获取路径
 const rowSplit = "|"
-dim ufp,path
-path= "./temp/"
+dim ufp,filePath
+filePath= "./temp/"
 function myConvert(strIn)
 	' 创建 ADODB.Stream 对象
 	Set stream = Server.CreateObject("ADODB.Stream")
@@ -69,7 +69,7 @@ for each File in Upload.Files.Items
  ' 
 	if InStr("|ini|md|mp3|bmp|jpg|jpeg|png|zip|7z|rar|pdf|doc|docx|xls|xlsx|ppt|pptx","|"&upfileext) > 0  then
 		ufp= tick & "-" & myConvert(File.FileName )
-		file.saveas Server.mappath(path&ufp)
+		file.saveas Server.mappath(filePath&ufp)
 		' 文件中一直 <size> 标记
 		fileArr(count) =  ufp & "<"& file.fileSize& ">"
 		
