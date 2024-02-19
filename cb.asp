@@ -1,11 +1,40 @@
 <%@LANGUAGE="JSCRIPT" CODEPAGE="65001"%>
 <%
-var fileInfo = ''
 // 处理 Application 的数据，返回有效的 arr 数据
+var fileFlag = 'F_Kp8~@k::'
+var filePath = 'cb/temp/'
+var fileReg = /(.*)<(\d+)>$/
+
+function strItem(item){
+	var str = String(item)
+	if( str =='undefined' )
+	{
+		str = ''
+	}
+	return str
+}
+/// <summary>
+/// 格式化文件大小的JS方法
+/// </summary>
+/// <param name="filesize">文件的大小,传入的是一个bytes为单位的参数</param>
+/// <returns>格式化后的值</returns>
+function renderSize(filesize){
+  if(null==filesize||filesize==''){
+      return "0 B";
+  }
+  var unitArr = new Array("B","KB","MB","GB","TB","PB","EB","ZB","YB");
+  var index=0;
+  var srcsize = parseFloat(filesize);
+  index=Math.floor(Math.log(srcsize)/Math.log(1024));
+  var size =srcsize/Math.pow(1024,index);
+  size=size.toFixed(2);//保留的小数位数
+  return size+unitArr[index];
+}
 function doApplication(){
    var maxCount = 50
    var rowSplit = '|-6VoPMA-|'
    var colSplit = '|-9YimUN-|'
+
    var nowTime = new Date().getTime()
    var arr = []
 
@@ -32,27 +61,33 @@ function doApplication(){
       }
    }
    // 插入新数据
-   if(Request.Form.Count>0){
-      var myText = Request.Form("myText")
-      var e = Request.Form("expire")
-      if( e!=0 )
-      {
-         e = nowTime+e*24*3600*1000
-      }
-      obj = {
-         "txt": myText,       // 具体内容
-         "t": nowTime,    // 创建时间
-         "e": e           // 失效时间
-      }
-      arr.unshift(obj)
-   }
+   var myText =''
+   var e = 0
    // 文件名
-   var tick = Request.QueryString("tick")
-   if( tick　!='' && Application(tick) !=''){
+   var tick = strItem(Request.QueryString("tick"))
+   var expireFile = strItem(Request.QueryString("expireFile"))
+   if( /^\d+$/.test(tick) && strItem(Application(tick)) !='' ){
    // 有文件
-	fileInfo = Application(tick)
+	myText = fileFlag + Application(tick)
+	e = expireFile
 	Application(tick) = ''
    }
+   if(Request.Form.Count>0){
+      myText = strItem(Request.Form("myText"))
+      e = strItem(Request.Form("expire"))
+	}
+	if(myText != ''){
+	  if( e!=0 )
+	  {
+		 e = nowTime+e*24*3600*1000
+	  }
+	  obj = {
+		 "txt": myText,       // 具体内容
+		 "t": nowTime,    // 创建时间
+		 "e": e           // 失效时间
+	  }
+	  arr.unshift(obj)
+	}
 
    // 再次清理数据
    if (arr.length > maxCount) {
@@ -60,14 +95,66 @@ function doApplication(){
    }
    // 保存数据
    var tmpArr = []
+   var fileArr = []
    for(i=0; i < arr.length; i++)
    {
       var o = arr[i]
       var str = o["txt"]+colSplit+o["t"]+colSplit+o["e"]
       tmpArr.unshift(str)
+	  
+	  if( o["txt"].indexOf(fileFlag) == 0 )
+	  {
+	  
+		var file = getFileInfo(o["txt"])
+		for( var j = 0;j<file.length;j++)
+		{
+			fileArr.push(file[j].name)
+		}
+	  }
    }
    Application("tempText") = tmpArr.join(rowSplit)
+   cleanFile(fileArr)
    return arr
+}
+
+function getFileInfo(fileTxt){
+	var fileInfo = fileTxt.replace(fileFlag,'').split('|')
+	var arr = []
+	for( var i = 0;i<fileInfo.length;i++)
+	{
+		var file = {}
+		// filename<size> 
+		var info = fileReg.exec(fileInfo[i])
+		if(info!=null && info.length == 3){
+			file.name = info[1]
+			file.size = info[2]
+			arr.push(file)
+		}
+	}
+	return arr
+}
+function cleanFile(fileArr){
+// loop file under filePath
+	var fso, f, f1, fc, s;
+	fso = new ActiveXObject("Scripting.FileSystemObject");
+	f = fso.GetFolder(Server.MapPath(filePath));
+	fc = new Enumerator(f.files);
+	for (; !fc.atEnd(); fc.moveNext())
+	{
+		var file = fc.item()
+		var canDel = true
+		for(var i= 0;i<fileArr.length;i++)
+		{
+			if( fileArr[i] == file.Name)
+			{
+				canDel = false
+				break
+			}
+		}
+		if(canDel){
+			file.Delete()
+		}
+	}
 }
 var arr = doApplication()
 %>
@@ -172,16 +259,21 @@ var arr = doApplication()
       <br />
       <input type="submit" value="提交" />
    </form>
-   <div>-
-      <%
-	  Response.write( fileInfo )
-%>-
-</div>
    <ol>
       <%
       for (var i = 0; i < arr.length; i++) {
          var obj = arr[i]
-         Response.write("<li><div data='" + obj.t +","+obj.e+"'></div><textarea readonly='1' cols=50 rows=4>" + obj.txt + "</textarea></li>")
+		 Response.write("<li><div data='" + obj.t +","+obj.e+"'></div></li>")
+		 if( obj.txt.indexOf(fileFlag)== 0 ){
+			var fileInfo = getFileInfo(obj.txt)
+			for( var j = 0;j<fileInfo.length;j++)
+			{
+				Response.write("<a href='"+filePath+fileInfo[j].name+"' target='blank'>" +fileInfo[j].name+ "</a> "+ renderSize(fileInfo[j].size) +"<br/>")
+			}
+		 }else{
+			Response.write("<textarea readonly='1' cols=50 rows=4>" + obj.txt + "</textarea>")
+		 }
+		 Response.write("</li>")
       }
       %>
    </ol>

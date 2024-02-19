@@ -8,7 +8,10 @@
 </head>
 <body>
 <%
-
+' 获取路径
+const rowSplit = "|"
+dim ufp,path
+path= "./temp/"
 function myConvert(strIn)
 	' 创建 ADODB.Stream 对象
 	Set stream = Server.CreateObject("ADODB.Stream")
@@ -37,10 +40,7 @@ function myConvert(strIn)
 	myConvert = strOut
 end function
 
-const rowSplit = "|-6VoPMA-|"
-const colSplit = "|-9YimUN-|"
-   
-dim ufp,path
+
 
 Server.ScriptTimeout = 900
 
@@ -52,8 +52,6 @@ if Upload.ErrMsg <> "" then
 Response.Write(Upload.ErrMsg)
 Response.End()
 end if
-' 获取路径
-path= "./temp/"
 
 if Upload.Files.Count > 0 then
 Items = Upload.Files.Items
@@ -69,7 +67,7 @@ for each File in Upload.Files.Items
 	upfilename = split(File.FileName,".")
 	upfileext = Lcase(upfilename(ubound(upfilename)))
  ' 
-	if InStr("|md|mp3|bmp|jpg|jpeg|png|zip|7z|rar|pdf|doc|docx|xls|xlsx|ppt|pptx","|"&upfileext) > 0  then
+	if InStr("|ini|md|mp3|bmp|jpg|jpeg|png|zip|7z|rar|pdf|doc|docx|xls|xlsx|ppt|pptx","|"&upfileext) > 0  then
 		ufp= tick & "-" & myConvert(File.FileName )
 		file.saveas Server.mappath(path&ufp)
 		' 文件中一直 <size> 标记
@@ -90,10 +88,7 @@ Response.Write("已经成功上传")
 
 if ufp<>"" then %>
 <script language="JavaScript">
-path=window.location.href;
-
 window.location.href="../cb.asp?tick=<%=tick%>&expireFile=<%=expireFile%>"
-
 </script>
 <%
 end if
