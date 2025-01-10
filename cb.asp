@@ -62,6 +62,7 @@ function doApplication(){
    }
    // 插入新数据
    var myText =''
+   var clearAllFlag = ''
    var e = 0
    // 文件名
    var tick = strItem(Request.QueryString("tick"))
@@ -75,6 +76,15 @@ function doApplication(){
    if(Request.Form.Count>0){
       myText = strItem(Request.Form("myText"))
       e = strItem(Request.Form("expire"))
+	  clearAllFlag  = strItem(Request.Form("clearAllFlag"))
+	  if( clearAllFlag == '0oO1iIlLq9g' )
+	  {
+		// 全部清理
+		Application("tempText") = ''
+		arr = []
+		cleanFile(arr)
+		return arr
+	  }
 	}
 	if(myText != ''){
 	  if( e!=0 )
@@ -181,8 +191,14 @@ var arr = doApplication()
 
 <body>
 <script>
+	function getById(name){
+		return document.getElementById(name)
+	}
    function checkit() {
-      var v = document.getElementById('myText').value
+      var v = getById('myText').value
+	  if(getById('clearAllFlag').value!=''){
+		return true; // 清空数据
+	  }
       return v.trim() != ''
    }
    function checkit2() {
@@ -207,14 +223,14 @@ var arr = doApplication()
 			break;
 		  }
 		}
-	  document.getElementById('expireFile').value = selectedValue
+	  getById('expireFile').value = selectedValue
       return true
    }
    let outFirstList = '', inFirstList = '',fileNum = 1;
    window.onload = function()
    {
-	  outFirstList = document.getElementById('firstFile').outerHTML
-	  inFirstList = document.getElementById('firstFile').innerHTML
+	  outFirstList = getById('firstFile').outerHTML
+	  inFirstList = getById('firstFile').innerHTML
       let items = document.querySelectorAll("li div")
       for(let k of items)
       {
@@ -238,9 +254,16 @@ var arr = doApplication()
 	}
    }
    function resetFile(){
-	document.getElementById('fileList').innerHTML = outFirstList
+	getById('fileList').innerHTML = outFirstList
 	fileNum = 0
 	return true;
+   }
+   function clearAll(){
+	if(confirm('确定清除所有历史记录?')){
+		getById('clearAllFlag').value ='0oO1iIlLq9g';
+		return true;
+	}
+	return false;
    }
 </script>
    <form name="form3" method="post" action="cb/uploadResult.asp" enctype="multipart/form-data" onSubmit="return checkit2();">
@@ -257,7 +280,8 @@ var arr = doApplication()
       <label><input type="radio" name="expire" value="7" >一周失效</input></label> 
       <label><input type="radio" name="expire" value="0" >直到重启</input></label> 
       <br />
-      <input type="submit" value="提交" />
+      <input type="submit" value="提交" /> <input type="submit" onclick="return clearAll()" value="清空全部记录" />
+	  <input type="hidden" id="clearAllFlag" name="clearAllFlag" value="" />
    </form>
    <ol>
       <%
