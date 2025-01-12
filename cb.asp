@@ -2,7 +2,7 @@
 <%
 // 处理 Application 的数据，返回有效的 arr 数据
 var fileFlag = 'F_Kp8~@k::'
-var filePath = 'cb/temp/'
+var filePath = 'cb/temp/' // 临时文件路径
 var fileReg = /(.*)<(\d+)>$/
 
 function strItem(item){
@@ -203,15 +203,17 @@ var arr = doApplication()
    }
    function checkit2() {
       var v2 = document.querySelectorAll(".uploadFile")
+	  var files = []
 	  let count = 0;
 	  for(let f of v2){
 		count++;
-		if( f.value.trim() == '')
+		if( f.files.length == 0)
 		{
 			alert("第"+count+"个文件未选择!")
 			f.focus()
 			return false
 		}
+		files.push(encodeURI(f.files[0].name))
 	  }
 		var radioButtons = document.getElementsByName('expire');
 		var selectedValue = 0
@@ -224,6 +226,7 @@ var arr = doApplication()
 		  }
 		}
 	  getById('expireFile').value = selectedValue
+	  getById('fileName').value = files.join('|')
       return true
    }
    let outFirstList = '', inFirstList = '',fileNum = 1;
@@ -268,6 +271,7 @@ var arr = doApplication()
 </script>
    <form name="form3" method="post" action="cb/uploadResult.asp" enctype="multipart/form-data" onSubmit="return checkit2();">
    <input type="hidden" id="expireFile" name="expireFile" value="0" />
+   <input type="hidden" id="fileName" name="fileName" value="" />
     <div id="fileList">
       <div id="firstFile"><input class="uploadFile" name="f_" type="file" /><input type="button" onclick="addFile(this,1)" value="➕"> <input type="button" onclick="addFile(this,-1)" value="➖">
 	  </div>
